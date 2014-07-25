@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pre-dex-items>
+
+    <item
+        dex="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/pre-dexed/debug/internal_impl-20.0.0-590ee5969406d0c5f61be5989a7768262221f284.jar"
+        jar="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/exploded-aar/com.android.support/support-v4/20.0.0/libs/internal_impl-20.0.0.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="e40b3078e3fbd353c9f44da8df25a8fc0078209d"/>
+    <item
+        dex="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/pre-dexed/debug/classes-dfe98cd8b415218fb17ffad09d30905e4605d739.jar"
+        jar="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/exploded-aar/com.google.android.gms/play-services/5.0.77/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="b6a82434c1eca686607867cd906bcc80ed987837"/>
+    <item
+        dex="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/pre-dexed/debug/support-annotations-20.0.0-bca9cd8c8082330ef7549e0398af852faae531fd.jar"
+        jar="/Applications/Android Studio.app/sdk/extras/android/m2repository/com/android/support/support-annotations/20.0.0/support-annotations-20.0.0.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="9d9013e9ff35fc3756411e62873c363c70c638fa"/>
+    <item
+        dex="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/pre-dexed/debug/classes-d4f7df63aa3f2ce3faa7c6635ce0f2333908d92d.jar"
+        jar="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/exploded-aar/com.android.support/appcompat-v7/20.0.0/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="f21927d22fe31889ecce94dd697a2e75b137e0ef"/>
+    <item
+        dex="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/pre-dexed/debug/classes-5bc60bccd76101d502dae21d838d61e04127826f.jar"
+        jar="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/exploded-aar/com.android.support/support-v4/20.0.0/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="8694693636ab36910c8100ce527c258ff3ebece0"/>
+    <item
+        dex="/Users/ageo/src/GeoFencePOC/mobile/build/intermediates/pre-dexed/debug/annotations-12.0-8906eb01a47b0b85663703405c5992e97475e04e.jar"
+        jar="/Users/ageo/.gradle/caches/modules-2/files-2.1/com.intellij/annotations/12.0/bbcf6448f6d40abe506e2c83b70a3e8bfd2b4539/annotations-12.0.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="bbcf6448f6d40abe506e2c83b70a3e8bfd2b4539"/>
+
+</pre-dex-items>
