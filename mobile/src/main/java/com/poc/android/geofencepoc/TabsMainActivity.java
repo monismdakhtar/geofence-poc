@@ -12,10 +12,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.jetbrains.annotations.NotNull;
 
 
-public class TabsMainActivity extends ActionBarActivity implements ActionBar.OnNavigationListener {
+public class TabsMainActivity extends ActionBarActivity implements
+        ActionBar.OnNavigationListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
+
     private static final String TAG = "TabsMainActivity";
 
     /**
@@ -99,6 +106,21 @@ public class TabsMainActivity extends ActionBarActivity implements ActionBar.OnN
                 .replace(R.id.container, fragment)
                 .commit();
         return true;
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.d(TAG, "Google API Client onConnected()");
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Log.d(TAG, "Google API Client onConnectionSuspended(" + cause + ")");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.d(TAG, "Google API Client onConnectionFailed(" + connectionResult + ")");
     }
 
     /**
