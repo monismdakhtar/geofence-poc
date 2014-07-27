@@ -6,7 +6,8 @@
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Reset Fence</string>
     <string name="error_no_google_maps_available">Google Maps unavailable</string>
+    <string name="toast_error_latest_geofence_not_found">GeoFence was not found</string>
 
 </resources>

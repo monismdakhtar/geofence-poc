@@ -1,10 +1,10 @@
 package com.poc.android.geofencepoc;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -22,10 +22,12 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.location.LocationServices;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Date;
 
 
 public class TabsMainActivity extends ActionBarActivity implements
@@ -48,6 +50,8 @@ public class TabsMainActivity extends ActionBarActivity implements
     private GoogleCloudMessaging gcm;
     private String gcmRegistrationId;
 
+    private GoogleApiClient googleApiClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
@@ -56,7 +60,7 @@ public class TabsMainActivity extends ActionBarActivity implements
 
         if (checkPlayServices()) {
             gcm = GoogleCloudMessaging.getInstance(this);
-            gcmRegistrationId = getRegistrationId(getApplicationContext());
+            gcmRegistrationId = getGcmRegistrationId(getApplicationContext());
 
             if (gcmRegistrationId.isEmpty()) {
                 registerInBackground();
@@ -81,6 +85,16 @@ public class TabsMainActivity extends ActionBarActivity implements
                                 getString(R.string.title_section3),
                         }),
                 this);
+    }
+
+    @Override
+    protected void onStart() {
+        Log.d(TAG, "onStart()");
+        super.onStart();
+
+        if (! getGcmRegistrationId(getApplicationContext()).isEmpty()) {
+            registerGeoFence();
+        }
     }
 
 
@@ -122,6 +136,7 @@ public class TabsMainActivity extends ActionBarActivity implements
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            registerGeoFence();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -146,6 +161,29 @@ public class TabsMainActivity extends ActionBarActivity implements
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "Google API Client onConnected()");
+
+        String gcmRegistrationId = getGcmRegistrationId(this);
+
+        if (gcmRegistrationId.isEmpty()) {
+            Log.d(TAG, "unable to register GeoFence without GCM registration ID");
+            return;
+        }
+
+        Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+        Log.d(TAG, "current location: " + location);
+
+        if (location != null) {
+            GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest geoFenceUpdateRequest = new GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest();
+            geoFenceUpdateRequest.setDeviceId(gcmRegistrationId);
+            geoFenceUpdateRequest.setLatitude(location.getLatitude());
+            geoFenceUpdateRequest.setLongitude(location.getLongitude());
+            geoFenceUpdateRequest.setTimestamp(new Date());
+
+            new GeoFenceUpdateAsyncTask().execute(geoFenceUpdateRequest);
+        }
+
+        googleApiClient.disconnect();
     }
 
     @Override
@@ -173,8 +211,25 @@ public class TabsMainActivity extends ActionBarActivity implements
         return true;
     }
 
-    private String getRegistrationId(Context applicationContext) {
-        final SharedPreferences prefs = getGCMPreferences(applicationContext);
+    private void registerGeoFence() {
+        Log.d(TAG, "registerGeoFence()");
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+        }
+
+        if (!googleApiClient.isConnected() && !googleApiClient.isConnecting()) {
+            googleApiClient.connect();
+        } else if (googleApiClient.isConnected()) {
+            onConnected(null);
+        }
+    }
+
+    private String getGcmRegistrationId(Context applicationContext) {
+        final SharedPreferences prefs = getGCMPreferences();
         String registrationId = prefs.getString(PROPERTY_REG_ID, "");
         if (registrationId.isEmpty()) {
             Log.i(TAG, "Registration not found.");
@@ -203,7 +258,7 @@ public class TabsMainActivity extends ActionBarActivity implements
         }
     }
 
-    private SharedPreferences getGCMPreferences(Context applicationContext) {
+    private SharedPreferences getGCMPreferences() {
         return getSharedPreferences(TabsMainActivity.class.getSimpleName(), Context.MODE_PRIVATE);
     }
 
@@ -217,7 +272,7 @@ public class TabsMainActivity extends ActionBarActivity implements
         new AsyncTask<Void, Void, String>() {
             @Override
             protected String doInBackground(Void... params) {
-                String msg = "";
+                String msg;
                 try {
                     if (gcm == null) {
                         gcm = GoogleCloudMessaging.getInstance(getApplicationContext());
@@ -257,7 +312,7 @@ public class TabsMainActivity extends ActionBarActivity implements
     }
 
     private void storeRegistrationId(Context applicationContext, String gcmRegistrationId) {
-        final SharedPreferences prefs = getGCMPreferences(applicationContext);
+        final SharedPreferences prefs = getGCMPreferences();
         int appVersion = getAppVersion(applicationContext);
         Log.i(TAG, "Saving regId on app version " + appVersion);
         SharedPreferences.Editor editor = prefs.edit();
@@ -323,11 +378,6 @@ public class TabsMainActivity extends ActionBarActivity implements
         super.onPause();
     }
 
-    @Override
-    protected void onStart() {
-        Log.d(TAG, "onStart()");
-        super.onStart();
-    }
 
     @Override
     protected void onRestart() {

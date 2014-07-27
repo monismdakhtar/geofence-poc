@@ -30,7 +30,7 @@ public class GeoFenceContentProvider extends ContentProvider {
 
     private static final String GEOFENCE_PATH = "geofence";
 
-    public static final String AUTHORITY = "com.poc.android.geofences.contentprovider";
+    public static final String AUTHORITY = "com.poc.android.geofencepoc.contentprovider";
     public static final Uri GEOFENCE_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + GEOFENCE_PATH);
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);

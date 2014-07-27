@@ -4,14 +4,13 @@ import android.database.Cursor;
 import android.net.Uri;
 
 import com.poc.android.geofencepoc.App;
-import com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider;
-import com.poc.android.geofencepoc.model.dao.DBHelper;
 
 import java.util.Date;
 
-import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.*;
+import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
 
+@SuppressWarnings("UnusedDeclaration")
 public class GeoFence {
     private long id;
     private String name;
