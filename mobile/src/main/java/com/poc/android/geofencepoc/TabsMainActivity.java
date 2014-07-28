@@ -1,13 +1,10 @@
 package com.poc.android.geofencepoc;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -29,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Date;
 
+import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
+
 
 public class TabsMainActivity extends ActionBarActivity implements
         ActionBar.OnNavigationListener,
@@ -43,12 +42,11 @@ public class TabsMainActivity extends ActionBarActivity implements
      */
     private static final String STATE_SELECTED_NAVIGATION_ITEM = "selected_navigation_item";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-    private static final String PROPERTY_REG_ID = "registration_id";
-    private static final String PROPERTY_APP_VERSION = "appVersion";
     private static final String SENDER_ID = "673992645420";
 
     private GoogleCloudMessaging gcm;
     private String gcmRegistrationId;
+    private GeoFenceContentObserver geoFenceContentObserver;
 
     private GoogleApiClient googleApiClient;
 
@@ -60,7 +58,7 @@ public class TabsMainActivity extends ActionBarActivity implements
 
         if (checkPlayServices()) {
             gcm = GoogleCloudMessaging.getInstance(this);
-            gcmRegistrationId = getGcmRegistrationId(getApplicationContext());
+            gcmRegistrationId = App.getGcmRegistrationId();
 
             if (gcmRegistrationId.isEmpty()) {
                 registerInBackground();
@@ -85,6 +83,10 @@ public class TabsMainActivity extends ActionBarActivity implements
                                 getString(R.string.title_section3),
                         }),
                 this);
+
+
+        geoFenceContentObserver = new GeoFenceContentObserver(new Handler());
+        getContentResolver().registerContentObserver(GEOFENCE_CONTENT_URI, true, geoFenceContentObserver);
     }
 
     @Override
@@ -92,11 +94,10 @@ public class TabsMainActivity extends ActionBarActivity implements
         Log.d(TAG, "onStart()");
         super.onStart();
 
-        if (! getGcmRegistrationId(getApplicationContext()).isEmpty()) {
+        if (! App.getGcmRegistrationId().isEmpty()) {
             registerGeoFence();
         }
     }
-
 
     @Override
     protected void onResume() {
@@ -105,6 +106,12 @@ public class TabsMainActivity extends ActionBarActivity implements
         checkPlayServices();
     }
 
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "onDestroy()");
+        getContentResolver().unregisterContentObserver(geoFenceContentObserver);
+        super.onDestroy();
+    }
 
     @Override
     public void onRestoreInstanceState(@NotNull Bundle savedInstanceState) {
@@ -162,28 +169,27 @@ public class TabsMainActivity extends ActionBarActivity implements
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "Google API Client onConnected()");
 
-        String gcmRegistrationId = getGcmRegistrationId(this);
+        String gcmRegistrationId = App.getGcmRegistrationId();
 
         if (gcmRegistrationId.isEmpty()) {
             Log.d(TAG, "unable to register GeoFence without GCM registration ID");
-            return;
+        } else {
+
+            Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+            Log.d(TAG, "current location: " + location);
+
+            if (location != null) {
+                GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest geoFenceUpdateRequest = new GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest();
+                geoFenceUpdateRequest.setDeviceId(gcmRegistrationId);
+                geoFenceUpdateRequest.setLatitude(location.getLatitude());
+                geoFenceUpdateRequest.setLongitude(location.getLongitude());
+                geoFenceUpdateRequest.setTimestamp(new Date());
+
+                new GeoFenceUpdateAsyncTask(this).execute(geoFenceUpdateRequest);
+            }
         }
-
-        Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-        Log.d(TAG, "current location: " + location);
-
-        if (location != null) {
-            GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest geoFenceUpdateRequest = new GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest();
-            geoFenceUpdateRequest.setDeviceId(gcmRegistrationId);
-            geoFenceUpdateRequest.setLatitude(location.getLatitude());
-            geoFenceUpdateRequest.setLongitude(location.getLongitude());
-            geoFenceUpdateRequest.setTimestamp(new Date());
-
-            new GeoFenceUpdateAsyncTask().execute(geoFenceUpdateRequest);
-        }
-
-        googleApiClient.disconnect();
+//        googleApiClient.disconnect();
     }
 
     @Override
@@ -228,40 +234,6 @@ public class TabsMainActivity extends ActionBarActivity implements
         }
     }
 
-    private String getGcmRegistrationId(Context applicationContext) {
-        final SharedPreferences prefs = getGCMPreferences();
-        String registrationId = prefs.getString(PROPERTY_REG_ID, "");
-        if (registrationId.isEmpty()) {
-            Log.i(TAG, "Registration not found.");
-            return "";
-        }
-        // Check if app was updated; if so, it must clear the registration ID
-        // since the existing regID is not guaranteed to work with the new
-        // app version.
-        int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
-        int currentVersion = getAppVersion(applicationContext);
-        if (registeredVersion != currentVersion) {
-            Log.i(TAG, "App version changed.");
-            return "";
-        }
-        return registrationId;
-    }
-
-    private int getAppVersion(Context applicationContext) {
-        try {
-            PackageInfo packageInfo = applicationContext.getPackageManager()
-                    .getPackageInfo(applicationContext.getPackageName(), 0);
-            return packageInfo.versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            // should never happen
-            throw new RuntimeException("Could not get package name: " + e);
-        }
-    }
-
-    private SharedPreferences getGCMPreferences() {
-        return getSharedPreferences(TabsMainActivity.class.getSimpleName(), Context.MODE_PRIVATE);
-    }
-
     /**
      * Registers the application with GCM servers asynchronously.
      * <p>
@@ -291,7 +263,7 @@ public class TabsMainActivity extends ActionBarActivity implements
                     // message using the 'from' address in the message.
 
                     // Persist the regID - no need to register again.
-                    storeRegistrationId(getApplicationContext(), gcmRegistrationId);
+                    App.storeRegistrationId(gcmRegistrationId);
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // If there is an error, don't just keep trying to register.
@@ -309,16 +281,6 @@ public class TabsMainActivity extends ActionBarActivity implements
         }.execute(null, null, null);
 
 
-    }
-
-    private void storeRegistrationId(Context applicationContext, String gcmRegistrationId) {
-        final SharedPreferences prefs = getGCMPreferences();
-        int appVersion = getAppVersion(applicationContext);
-        Log.i(TAG, "Saving regId on app version " + appVersion);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(PROPERTY_REG_ID, gcmRegistrationId);
-        editor.putInt(PROPERTY_APP_VERSION, appVersion);
-        editor.apply();
     }
 
     /**
@@ -366,11 +328,6 @@ public class TabsMainActivity extends ActionBarActivity implements
         super.onPostResume();
     }
 
-    @Override
-    protected void onDestroy() {
-        Log.d(TAG, "onDestroy()");
-        super.onDestroy();
-    }
 
     @Override
     protected void onPause() {

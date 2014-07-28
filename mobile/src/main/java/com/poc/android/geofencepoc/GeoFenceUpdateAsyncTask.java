@@ -1,8 +1,11 @@
 package com.poc.android.geofencepoc;
 
 import android.content.ContentValues;
+import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,6 +19,7 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.Expose;
 import com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider;
 import com.poc.android.geofencepoc.model.GeoFence;
+import com.poc.android.geofencepoc.model.ModelException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -46,6 +50,13 @@ import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_RA
 public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest, Integer, GeoFence> {
     private static final String TAG = "GeoFenceUpdateAsyncTask";
 
+    private Context context;
+    private String errorMessage = null;
+
+    public GeoFenceUpdateAsyncTask(Context context) {
+        this.context = context;
+    }
+
     @Override
     protected GeoFence doInBackground(GeoFenceUpdateRequest... params) {
         Log.d(TAG, "doInBackground(" + params[0] + ")");
@@ -65,8 +76,7 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
 
         builder.registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
             @Override
-            public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext
-                    context) {
+            public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
                 return src == null ? null : new JsonPrimitive(src.getTime());
             }
         });
@@ -84,12 +94,14 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
         HttpConnectionParams.setSoTimeout(httpParams, 5000);
         HttpClient httpClient = new DefaultHttpClient(httpParams);
 
+        HttpPost httpPost = new HttpPost("http://localhost:8080/blood/geofence/update");
 //        HttpPost httpPost = new HttpPost("http://199.83.221.130/blood/geofence/update");
-        HttpPost httpPost = new HttpPost("http://10.0.2.2:8080/blood/geofence/update");
+//        HttpPost httpPost = new HttpPost("http://10.0.2.2:8080/blood/geofence/update");
         ByteArrayEntity postEntity = new ByteArrayEntity(requestJson.getBytes());
         postEntity.setContentType(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
         httpPost.setEntity(postEntity);
 
+        boolean communicationErrorOccurred = false;
         try {
             HttpResponse response = httpClient.execute(httpPost);
             StatusLine statusLine = response.getStatusLine();
@@ -105,9 +117,16 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
                 inputStream.close();
             } else {
                 Log.d(TAG, "Failed on geofence update JSON post: http status = " + statusCode);
+                communicationErrorOccurred = true;
             }
         } catch (Exception e) {
             Log.d(TAG, "Failed on geofence update JSON post: " + e.getLocalizedMessage());
+            communicationErrorOccurred = true;
+        }
+
+        if (communicationErrorOccurred) {
+            errorMessage = "Error retrieving GeoFence from server";
+            return null;
         }
 
 //        {"id":6,"deviceId":"APA91bGq5BcyGmZTyvpIt7odBRnCcBCp-REgnOfwY6BbNgzT6p2Espics5xxpQgcOWPHkSHvjNy99UNkC6xF4f-3NsdFtz4WDNFhJAAmaZdDXWUmvkgcN3qepc4W1fk9i6imE-_J39b3QgsT5rVXcx5Wqfjec0v70O0kzbU9qaRzAc5YTn5PAkU","latitude":37.380867,"longitude":-122.086945,"radius":1000,"createTime":1406491569784,"exitTime":null,"version":0}
@@ -115,17 +134,31 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
         GeoFenceUpdateResponse response = gson.fromJson(stringBuilder.toString(), GeoFenceUpdateResponse.class);
         Log.d(TAG, "response:" + response);
 
-        recordGeoFence(response);
+        GeoFence geoFence = null;
 
-        return null;
+        try {
+            geoFence = recordGeoFence(response);
+        } catch (ModelException e) {
+            errorMessage = "Error recording GeoFence:";
+            Log.e(TAG, "Error recording GeoFence:" + e.getLocalizedMessage());
+        }
+
+        return geoFence;
     }
 
     @Override
     protected void onPostExecute(GeoFence geoFence) {
         super.onPostExecute(geoFence);
+
+        if (geoFence == null) {
+            Log.e(TAG, "geoFence == null");
+            if (errorMessage != null) {
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
-    private void recordGeoFence(GeoFenceUpdateResponse geoFenceUpdateResponse) {
+    private GeoFence recordGeoFence(GeoFenceUpdateResponse geoFenceUpdateResponse) throws ModelException {
         ContentValues values = new ContentValues();
         values.put(GEOFENCES_COLUMN_LATITUDE, geoFenceUpdateResponse.getLatitude());
         values.put(GEOFENCES_COLUMN_LONGITUDE, geoFenceUpdateResponse.getLongitude());
@@ -133,7 +166,9 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
         values.put(GEOFENCES_COLUMN_CREATE_TIME, geoFenceUpdateResponse.getCreateTime().getTime());
         values.put(GEOFENCES_COLUMN_NAME, "GeoFence " + geoFenceUpdateResponse.getId());
 
-        App.context.getContentResolver().insert(GeoFenceContentProvider.GEOFENCE_CONTENT_URI, values);
+        Uri uri = App.context.getContentResolver().insert(GeoFenceContentProvider.GEOFENCE_CONTENT_URI, values);
+
+        return new GeoFence(uri);
     }
 
     @SuppressWarnings("UnusedDeclaration")
