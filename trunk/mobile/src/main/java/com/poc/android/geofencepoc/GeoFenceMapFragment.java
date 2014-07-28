@@ -3,7 +3,7 @@ package com.poc.android.geofencepoc;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.database.ContentObserver;
-import android.database.Cursor;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -27,12 +28,13 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.VisibleRegion;
 import com.poc.android.geofencepoc.model.GeoFence;
 import com.poc.android.geofencepoc.model.ModelException;
 
+import org.jetbrains.annotations.NotNull;
+
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
-import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
-import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID;
 
 
 /**
@@ -40,13 +42,11 @@ import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID
  */
 public class GeoFenceMapFragment extends Fragment implements
         GoogleMap.OnMapClickListener,
-        GoogleMap.OnMarkerDragListener,
-        GoogleMap.OnMarkerClickListener,
         GoogleMap.OnCameraChangeListener {
     private static final String TAG = "GeoFenceMapFragment";
 
     private SupportMapFragment mapFragment;
-    private GeoFenceContentObserver geoFenceContentObserver;
+    private GeoFenceContentMapObserver geoFenceContentObserver;
     private Marker currentMaker;
 
     public GeoFenceMapFragment() { }
@@ -54,7 +54,7 @@ public class GeoFenceMapFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        geoFenceContentObserver = new GeoFenceContentObserver(new Handler());
+        geoFenceContentObserver = new GeoFenceContentMapObserver(new Handler());
         getActivity().getContentResolver().registerContentObserver(GEOFENCE_CONTENT_URI, true, geoFenceContentObserver);
     }
 
@@ -88,8 +88,6 @@ public class GeoFenceMapFragment extends Fragment implements
 
         if (map != null) {
             map.setOnMapClickListener(this);
-            map.setOnMarkerDragListener(this);
-            map.setOnMarkerClickListener(this);
             map.setOnCameraChangeListener(this);
 
             map.setMyLocationEnabled(true);
@@ -115,46 +113,45 @@ public class GeoFenceMapFragment extends Fragment implements
         super.onDetach();
     }
 
+    private float calculateMaxDistance(VisibleRegion visibleRegion) {
+        android.location.Location farLeft = new android.location.Location("internal");
+        android.location.Location nearRight = new android.location.Location("internal");
+        farLeft.setLatitude(visibleRegion.farLeft.latitude);
+        farLeft.setLongitude(visibleRegion.farLeft.longitude);
+        nearRight.setLatitude(visibleRegion.nearRight.latitude);
+        nearRight.setLongitude(visibleRegion.nearRight.longitude);
+
+        float distance = farLeft.distanceTo(nearRight);
+
+        Log.d(TAG, "calculateMaxDistance(): screen distance top left to bottom right:" + distance);
+        return distance;
+    }
+
     // start GoogleMap Listeners
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
-
+        Log.d(TAG, "onCameraChange(): zoom:" + cameraPosition.zoom);
+        if (mapFragment != null && mapFragment.getMap() != null) {
+            float maxDistance = calculateMaxDistance(mapFragment.getMap().getProjection().getVisibleRegion());
+            Log.d(TAG, "onCameraChange(): screen distance top left to bottom right:" + maxDistance);
+        }
     }
+
 
     @Override
     public void onMapClick(LatLng latLng) {
-
-    }
-
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        return false;
-    }
-
-    @Override
-    public void onMarkerDragStart(Marker marker) {
-
-    }
-
-    @Override
-    public void onMarkerDrag(Marker marker) {
-
-    }
-
-    @Override
-    public void onMarkerDragEnd(Marker marker) {
-
+        Log.d(TAG, "onMapClick(" + latLng + ")");
     }
     // end GoogleMap Listeners
 
-    public class GeoFenceContentObserver extends ContentObserver {
-        private static final String TAG = "GeoFenceContentObserver";
+    public class GeoFenceContentMapObserver extends ContentObserver {
+        private static final String TAG = "GeoFenceContentMapObserver";
         /**
          * Creates a content observer.
          *
          * @param handler The handler to run {@link #onChange} on, or null if none.
          */
-        public GeoFenceContentObserver(Handler handler) {
+        public GeoFenceContentMapObserver(Handler handler) {
             super(handler);
         }
 
@@ -170,16 +167,19 @@ public class GeoFenceMapFragment extends Fragment implements
             GeoFence latestGeoFence = null;
             
             try {
-                latestGeoFence = findLatestGeoFence();
+                latestGeoFence = GeoFence.findLatestGeoFence();
             } catch (ModelException e) {
                 Log.e(TAG, "unable to update map with latest geofence: " + e.getLocalizedMessage());
+                super.onChange(selfChange);
             }
 
             if (latestGeoFence != null) {
                 if (mapFragment != null && mapFragment.getMap() != null) {
                     mapFragment.getMap().clear();
                     addMarker(latestGeoFence, mapFragment.getMap());
-                    zoomToCurrentMarker();
+                    if (! isCurrentMarkerVisible(mapFragment)) {
+                        zoomToCurrentMarker();
+                    }
                 } else {
                     Log.e(TAG, "Google map fragment or Google map are null");
                 }
@@ -195,25 +195,6 @@ public class GeoFenceMapFragment extends Fragment implements
         public void onChange(boolean selfChange, Uri uri) {
             Log.d(TAG, "onChange(" + selfChange + ", " + uri + ")");
             super.onChange(selfChange, uri);
-        }
-
-        private GeoFence findLatestGeoFence() throws ModelException {
-            GeoFence geoFence = null;
-
-            Cursor cursor = App.context.getContentResolver().query(
-                    GEOFENCE_CONTENT_URI,
-                    GEOFENCES_ALL_COLUMNS,
-                    null,
-                    null,
-                    GEOFENCES_COLUMN_ID + " desc"
-            );
-
-            if (cursor != null) {
-                cursor.moveToFirst();
-                geoFence = new GeoFence(cursor);
-            }
-
-            return geoFence;
         }
     }
 
@@ -241,5 +222,38 @@ public class GeoFenceMapFragment extends Fragment implements
 //                mapFragment.getMap().animateCamera(CameraUpdateFactory.zoomTo(15), 1000, null);
             }
         }
+    }
+
+    private boolean isCurrentMarkerVisible(@NotNull SupportMapFragment mapFrag) {
+
+        GoogleMap map = mapFrag.getMap();
+        View fragView = mapFrag.getView();
+
+        if (map == null) {
+            Log.d(TAG, "mapFrag.getMap() == null");
+            return false;
+        }
+
+        if (fragView == null) {
+            Log.d(TAG, "mapFrag.getView() == null");
+            return false;
+        }
+
+        if (currentMaker != null) {
+            Projection projection = map.getProjection();
+            Point screenPoint = projection.toScreenLocation((currentMaker.getPosition()));
+            Log.d(TAG, "screenPoint = " + screenPoint + ", view h/w = " + fragView.getMeasuredHeight() + "/" + fragView.getMeasuredWidth());
+            if (screenPoint.x < 0 || screenPoint.y < 0) {
+                return false;
+            }
+            if (screenPoint.x > fragView.getMeasuredWidth()  || screenPoint.y > fragView.getMeasuredHeight()) {
+                return false;
+            }
+        } else {
+            Log.d(TAG, "currentMaker == null");
+            return false;
+        }
+
+        return true;
     }
 }

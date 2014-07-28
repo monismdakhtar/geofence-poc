@@ -9,6 +9,7 @@ import java.util.Date;
 
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID;
 
 @SuppressWarnings("UnusedDeclaration")
 public class GeoFence {
@@ -89,6 +90,26 @@ public class GeoFence {
 
     public void setExitTime(Date exitTime) {
         this.exitTime = exitTime;
+    }
+
+    public static GeoFence findLatestGeoFence() throws ModelException {
+        GeoFence geoFence = null;
+
+        Cursor cursor = App.context.getContentResolver().query(
+                GEOFENCE_CONTENT_URI,
+                GEOFENCES_ALL_COLUMNS,
+                null,
+                null,
+                GEOFENCES_COLUMN_ID + " desc"
+        );
+
+        if (cursor != null) {
+            cursor.moveToFirst();
+            geoFence = new GeoFence();
+            geoFence.load(cursor, true);
+        }
+
+        return geoFence;
     }
 
     @Override
