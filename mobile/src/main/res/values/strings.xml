@@ -11,4 +11,5 @@
     <string name="toast_error_latest_geofence_not_found">GeoFence was not found</string>
     <string name="geofence_transition_notification_text"> Click notification to return to app </string>
     <string name="geofence_transition_notification_title"> %1$s geofence(s) %2$s </string>
+    <string name="geofence_server_url">http://199.83.221.130/blood/geofence/update</string>
 </resources>

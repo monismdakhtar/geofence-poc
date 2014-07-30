@@ -94,9 +94,7 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
         HttpConnectionParams.setSoTimeout(httpParams, 5000);
         HttpClient httpClient = new DefaultHttpClient(httpParams);
 
-        HttpPost httpPost = new HttpPost("http://localhost:8080/blood/geofence/update");
-//        HttpPost httpPost = new HttpPost("http://199.83.221.130/blood/geofence/update");
-//        HttpPost httpPost = new HttpPost("http://10.0.2.2:8080/blood/geofence/update");
+        HttpPost httpPost = new HttpPost(context.getString(R.string.geofence_server_url));
         ByteArrayEntity postEntity = new ByteArrayEntity(requestJson.getBytes());
         postEntity.setContentType(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
         httpPost.setEntity(postEntity);
