@@ -17,27 +17,18 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.poc.android.geofencepoc.model.GeoFence;
 import com.poc.android.geofencepoc.model.ModelException;
 
 import java.util.ArrayList;
 
-import static com.google.android.gms.location.LocationRequest.PRIORITY_LOW_POWER;
-
 public class GeoFenceContentObserver extends ContentObserver implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "GeoFenceContentObserver";
-    private static final long UPDATE_INTERVAL = 60000L;
-    private static final float MIN_CHANGE_TO_REPORT = 0.0f;
 
-
-    private LocationRequest locationRequest;
-    private Intent locationUpdateIntent;
-    private PendingIntent locationUpdatePendingIntent;
     private Intent geoFenceTransitionIntent;
     private PendingIntent geoFenceTransitionPendingIntent;
     private GoogleApiClient googleApiClient;
@@ -50,20 +41,12 @@ public class GeoFenceContentObserver extends ContentObserver implements
     public GeoFenceContentObserver(Handler handler) {
         super(handler);
         geoFenceTransitionIntent  = new Intent(App.context, GeoFenceTransitionIntentService.class);
-        locationUpdateIntent = new Intent(App.context, LocationUpdateIntentService.class);
 
         googleApiClient = new GoogleApiClient.Builder(App.context)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-
-        locationRequest = LocationRequest.create()
-                .setPriority(PRIORITY_LOW_POWER)
-                .setInterval(UPDATE_INTERVAL)
-                .setSmallestDisplacement(MIN_CHANGE_TO_REPORT)
-                .setFastestInterval(UPDATE_INTERVAL);
-
     }
 
     @Override
@@ -145,23 +128,12 @@ public class GeoFenceContentObserver extends ContentObserver implements
                     } else {
                         Toast.makeText(App.context, "Unable to monitor GeoFences: " + status.getStatusMessage(), Toast.LENGTH_LONG).show();
                     }
-                }
-            });
-
-            PendingResult<Status> locationUpdateRequestResult = LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, createLocationUpdatePendingIntent());
-            locationUpdateRequestResult.setResultCallback(new ResultCallback<Status>() {
-                @Override
-                public void onResult(Status status) {
-                    if (status.isSuccess()) {
-                        Log.d(TAG, "location updates requested successfully");
-                    } else {
-                        Toast.makeText(App.context, "Unable to get location updates: " + status.getStatusMessage(), Toast.LENGTH_LONG).show();
-                    }
+                    googleApiClient.disconnect();
                 }
             });
         }
 
-//        googleApiClient.disconnect();
+
     }
 
     @Override
@@ -190,18 +162,18 @@ public class GeoFenceContentObserver extends ContentObserver implements
         }
     }
 
-    private PendingIntent createLocationUpdatePendingIntent() {
-        // If the PendingIntent already exists
-        if (null != locationUpdatePendingIntent) {
-            return locationUpdatePendingIntent;
-        } else {
-            locationUpdatePendingIntent = PendingIntent.getService(
-                    App.context,
-                    0,
-                    locationUpdateIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
-
-            return locationUpdatePendingIntent;
-        }
-    }
+//    private PendingIntent createLocationUpdatePendingIntent() {
+//        // If the PendingIntent already exists
+//        if (null != locationUpdatePendingIntent) {
+//            return locationUpdatePendingIntent;
+//        } else {
+//            locationUpdatePendingIntent = PendingIntent.getService(
+//                    App.context,
+//                    0,
+//                    locationUpdateIntent,
+//                    PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//            return locationUpdatePendingIntent;
+//        }
+//    }
 }

@@ -58,11 +58,6 @@
         </provider>
 
         <service
-            android:name=".LocationUpdateIntentService"
-            android:exported="false" >
-        </service>
-
-        <service
             android:name=".GeoFenceTransitionIntentService"
             android:exported="false" >
         </service>

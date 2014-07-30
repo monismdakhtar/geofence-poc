@@ -189,7 +189,7 @@ public class TabsMainActivity extends ActionBarActivity implements
                 new GeoFenceUpdateAsyncTask(this).execute(geoFenceUpdateRequest);
             }
         }
-//        googleApiClient.disconnect();
+        googleApiClient.disconnect();
     }
 
     @Override

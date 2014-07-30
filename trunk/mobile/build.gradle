@@ -17,6 +17,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    productFlavors {
+        simulator_local
+        teathered_local
+        qa
+    }
 }
 
 dependencies {
