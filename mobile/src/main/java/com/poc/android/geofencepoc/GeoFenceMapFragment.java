@@ -55,7 +55,6 @@ public class GeoFenceMapFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         geoFenceContentObserver = new GeoFenceContentMapObserver(new Handler());
-        getActivity().getContentResolver().registerContentObserver(GEOFENCE_CONTENT_URI, true, geoFenceContentObserver);
     }
 
     @Override
@@ -83,6 +82,8 @@ public class GeoFenceMapFragment extends Fragment implements
     public void onStart() {
         super.onStart();
 
+        getActivity().getContentResolver().registerContentObserver(GEOFENCE_CONTENT_URI, true, geoFenceContentObserver);
+
         GoogleMap map = mapFragment.getMap();
         Log.d(TAG, "map:" + map);
 
@@ -105,12 +106,33 @@ public class GeoFenceMapFragment extends Fragment implements
 
     @Override
     public void onAttach(Activity activity) {
+        Log.d(TAG, "onAttach(" + activity + ")");
         super.onAttach(activity);
     }
 
     @Override
     public void onDetach() {
+        Log.d(TAG, "onDetach()");
         super.onDetach();
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(TAG, "onResume()");
+        drawLatestGeoFence();
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(TAG, "onPause()");
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy()");
+        super.onDestroy();
     }
 
     private float calculateMaxDistance(VisibleRegion visibleRegion) {
@@ -164,29 +186,8 @@ public class GeoFenceMapFragment extends Fragment implements
         public void onChange(boolean selfChange) {
             Log.d(TAG, "onChange(" + selfChange + ")");
 
-            GeoFence latestGeoFence = null;
-            
-            try {
-                latestGeoFence = GeoFence.findLatestGeoFence();
-            } catch (ModelException e) {
-                Log.e(TAG, "unable to update map with latest geofence: " + e.getLocalizedMessage());
-                super.onChange(selfChange);
-            }
+            drawLatestGeoFence();
 
-            if (latestGeoFence != null) {
-                if (mapFragment != null && mapFragment.getMap() != null) {
-                    mapFragment.getMap().clear();
-                    addMarker(latestGeoFence, mapFragment.getMap());
-                    if (! isCurrentMarkerVisible(mapFragment)) {
-                        zoomToCurrentMarker();
-                    }
-                } else {
-                    Log.e(TAG, "Google map fragment or Google map are null");
-                }
-            } else {
-                Toast.makeText(App.context, App.context.getString(R.string.toast_error_latest_geofence_not_found), Toast.LENGTH_LONG).show();
-            }
-            
             super.onChange(selfChange);
         }
 
@@ -196,6 +197,32 @@ public class GeoFenceMapFragment extends Fragment implements
             Log.d(TAG, "onChange(" + selfChange + ", " + uri + ")");
             super.onChange(selfChange, uri);
         }
+    }
+
+    private void drawLatestGeoFence() {
+        GeoFence latestGeoFence;
+
+        try {
+            latestGeoFence = GeoFence.findLatestGeoFence();
+        } catch (ModelException e) {
+            Log.e(TAG, "unable to update map with latest geofence: " + e.getLocalizedMessage());
+            return;
+        }
+
+        if (latestGeoFence != null) {
+            if (mapFragment != null && mapFragment.getMap() != null) {
+                mapFragment.getMap().clear();
+                addMarker(latestGeoFence, mapFragment.getMap());
+                if (! isCurrentMarkerVisible(mapFragment)) {
+                    zoomToCurrentMarker();
+                }
+            } else {
+                Log.e(TAG, "Google map fragment or Google map are null");
+            }
+        } else {
+            Toast.makeText(getActivity(), App.context.getString(R.string.toast_error_latest_geofence_not_found), Toast.LENGTH_LONG).show();
+        }
+
     }
 
     private void addMarker(GeoFence latestGeoFence, GoogleMap map) {
@@ -244,6 +271,9 @@ public class GeoFenceMapFragment extends Fragment implements
             Point screenPoint = projection.toScreenLocation((currentMaker.getPosition()));
             Log.d(TAG, "screenPoint = " + screenPoint + ", view h/w = " + fragView.getMeasuredHeight() + "/" + fragView.getMeasuredWidth());
             if (screenPoint.x < 0 || screenPoint.y < 0) {
+                return false;
+            }
+            if (fragView.getMeasuredWidth() == 0 || fragView.getMeasuredHeight() == 0) {
                 return false;
             }
             if (screenPoint.x > fragView.getMeasuredWidth()  || screenPoint.y > fragView.getMeasuredHeight()) {
