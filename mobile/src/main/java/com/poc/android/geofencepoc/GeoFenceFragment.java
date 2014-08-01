@@ -25,6 +25,8 @@ import static com.poc.android.geofencepoc.MapDetailActivity.*;
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_CREATE_TIME;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_DWELL_TIME;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ENTER_TIME;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_EXIT_TIME;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_LATITUDE;
@@ -96,6 +98,8 @@ public class GeoFenceFragment extends ListFragment implements LoaderManager.Load
                 GEOFENCES_COLUMN_LATITUDE,
                 GEOFENCES_COLUMN_LONGITUDE,
                 GEOFENCES_COLUMN_CREATE_TIME,
+                GEOFENCES_COLUMN_ENTER_TIME,
+                GEOFENCES_COLUMN_DWELL_TIME,
                 GEOFENCES_COLUMN_EXIT_TIME
         };
 
@@ -105,6 +109,8 @@ public class GeoFenceFragment extends ListFragment implements LoaderManager.Load
                 R.id.latitudeTextView,
                 R.id.longitudeTextView,
                 R.id.createtimeTextView,
+                R.id.entertimeTextView,
+                R.id.dwellTextView,
                 R.id.exittimeTextView
         };
 
@@ -148,19 +154,41 @@ public class GeoFenceFragment extends ListFragment implements LoaderManager.Load
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
 //            Log.d(TAG, "setViewValue(" + view + ", " + cursor + ", " + columnIndex + ")");
+            int createTimeIndex = 5;
+            int enterTimeIndex = 6;
+            int dwellTimeIndex = 7;
+            int exitTimeIndex = 8;
 
-            if (columnIndex == 5 && view instanceof TextView && cursor.getLong(5) > 0) {
-                Date date = new Date(cursor.getLong(5));
+            DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG);
 
-                ((TextView) view).setText(DateFormat.getInstance().format(date));
+            if (columnIndex == createTimeIndex && view instanceof TextView && cursor.getLong(createTimeIndex) > 0) {
+                Date date = new Date(cursor.getLong(createTimeIndex));
+
+                ((TextView) view).setText(dateFormat.format(date));
 
                 return true;
             }
 
-            if (columnIndex == 6 && view instanceof TextView && cursor.getLong(6) > 0) {
-                Date date = new Date(cursor.getLong(6));
+            if (columnIndex == enterTimeIndex && view instanceof TextView && cursor.getLong(enterTimeIndex) > 0) {
+                Date date = new Date(cursor.getLong(enterTimeIndex));
 
-                ((TextView) view).setText(DateFormat.getInstance().format(date));
+                ((TextView) view).setText(dateFormat.format(date));
+
+                return true;
+            }
+
+            if (columnIndex == dwellTimeIndex && view instanceof TextView && cursor.getLong(dwellTimeIndex) > 0) {
+                Date date = new Date(cursor.getLong(dwellTimeIndex));
+
+                ((TextView) view).setText(dateFormat.format(date));
+
+                return true;
+            }
+
+            if (columnIndex == exitTimeIndex && view instanceof TextView && cursor.getLong(exitTimeIndex) > 0) {
+                Date date = new Date(cursor.getLong(exitTimeIndex));
+
+                ((TextView) view).setText(dateFormat.format(date));
 
                 return true;
             }

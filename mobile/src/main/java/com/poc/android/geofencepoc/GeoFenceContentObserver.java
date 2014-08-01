@@ -1,11 +1,9 @@
 package com.poc.android.geofencepoc;
 
-import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -18,6 +16,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationServices;
+import com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider;
 import com.poc.android.geofencepoc.model.GeoFence;
 import com.poc.android.geofencepoc.model.ModelException;
 
@@ -59,19 +58,25 @@ public class GeoFenceContentObserver extends ContentObserver implements
     public void onChange(boolean selfChange) {
         Log.d(TAG, "onChange(" + selfChange + ")");
 
-        if (!googleApiClient.isConnected() && !googleApiClient.isConnecting()) {
-            googleApiClient.connect();
-        } else if (googleApiClient.isConnected()) {
-            onConnected(null);
-        }
-
         super.onChange(selfChange);
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+//    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void onChange(boolean selfChange, Uri uri) {
         Log.d(TAG, "onChange(" + selfChange + ", " + uri + ")");
+
+        int uriType = GeoFenceContentProvider.URI_MATCHER.match(uri);
+
+        // this will only update the geofence for inserts.  updates to individual geofences
+        // like updating the entertime, will not trigger the registration od the updated geofence
+        if (uriType == GeoFenceContentProvider.GEOFENCES) {
+            if (!googleApiClient.isConnected() && !googleApiClient.isConnecting()) {
+                googleApiClient.connect();
+            } else if (googleApiClient.isConnected()) {
+                onConnected(null);
+            }
+        }
         super.onChange(selfChange, uri);
     }
 
@@ -159,19 +164,4 @@ public class GeoFenceContentObserver extends ContentObserver implements
             return geoFenceTransitionPendingIntent;
         }
     }
-
-//    private PendingIntent createLocationUpdatePendingIntent() {
-//        // If the PendingIntent already exists
-//        if (null != locationUpdatePendingIntent) {
-//            return locationUpdatePendingIntent;
-//        } else {
-//            locationUpdatePendingIntent = PendingIntent.getService(
-//                    App.context,
-//                    0,
-//                    locationUpdateIntent,
-//                    PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//            return locationUpdatePendingIntent;
-//        }
-//    }
 }

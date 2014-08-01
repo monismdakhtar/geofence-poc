@@ -26,18 +26,18 @@ public class GeoFenceContentProvider extends ContentProvider {
     private DBHelper dbHelper;
 
     // used for the UriMatcher
-    private static final int GEOFENCES = 10;
-    private static final int GEOFENCES_ID = 20;
+    public static final int GEOFENCES = 10;
+    public static final int GEOFENCES_ID = 20;
 
     private static final String GEOFENCE_PATH = "geofence";
 
     public static final String AUTHORITY = "com.poc.android.geofencepoc.contentprovider";
     public static final Uri GEOFENCE_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + GEOFENCE_PATH);
 
-    private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    public static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
     static {
-        sURIMatcher.addURI(AUTHORITY, GEOFENCE_PATH, GEOFENCES);
-        sURIMatcher.addURI(AUTHORITY, GEOFENCE_PATH + "/#", GEOFENCES_ID);
+        URI_MATCHER.addURI(AUTHORITY, GEOFENCE_PATH, GEOFENCES);
+        URI_MATCHER.addURI(AUTHORITY, GEOFENCE_PATH + "/#", GEOFENCES_ID);
 
     }
 
@@ -61,7 +61,7 @@ public class GeoFenceContentProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        int uriType = sURIMatcher.match(uri);
+        int uriType = URI_MATCHER.match(uri);
         SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
         Uri result;
 
@@ -87,7 +87,7 @@ public class GeoFenceContentProvider extends ContentProvider {
         Cursor cursor;
         SQLiteDatabase db;
 
-        int uriType = sURIMatcher.match(uri);
+        int uriType = URI_MATCHER.match(uri);
         switch (uriType) {
             case GEOFENCES_ID:
                 // adding the ID to the original query
@@ -109,7 +109,7 @@ public class GeoFenceContentProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        int uriType = sURIMatcher.match(uri);
+        int uriType = URI_MATCHER.match(uri);
         SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
         int rowsUpdated;
 
@@ -132,7 +132,7 @@ public class GeoFenceContentProvider extends ContentProvider {
         }
         // make sure that potential listeners are getting notified
         //noinspection ConstantConditions
-        getContext().getContentResolver().notifyChange(GEOFENCE_CONTENT_URI, null);
+        getContext().getContentResolver().notifyChange(uri, null);
 
         return rowsUpdated;
     }

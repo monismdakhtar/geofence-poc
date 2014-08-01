@@ -70,9 +70,11 @@ public class GeoFenceTransitionIntentService extends IntentService {
                     break;
                 case Geofence.GEOFENCE_TRANSITION_ENTER:
                     transitionString = "entered";
+                    updateEnterTime(geofenceIds);
                     break;
                 case Geofence.GEOFENCE_TRANSITION_DWELL:
                     transitionString = "dwelled";
+                    updateDwellTime(geofenceIds);
                     break;
                 default:
                     Log.e(TAG, "Geofence transition error: " + Integer.toString(transitionType));
@@ -81,6 +83,34 @@ public class GeoFenceTransitionIntentService extends IntentService {
             sendNotification(transitionString, ids);
 
             Log.d(TAG, "geofence(s) " + transitionString + ", ids " + ids);
+        }
+    }
+
+    private void updateEnterTime(String[] geofenceIds) {
+        for (String id : geofenceIds) {
+
+            Uri uri = Uri.parse(GeoFenceContentProvider.GEOFENCE_CONTENT_URI + "/" + id);
+            Date now = new Date();
+            ContentValues values = new ContentValues();
+            values.put(DBHelper.GEOFENCES_COLUMN_ENTER_TIME, now.getTime());
+
+            Log.d(TAG, "updated geofence enter time for geofence " + id);
+
+            App.context.getContentResolver().update(uri, values, null, null);
+        }
+    }
+
+    private void updateDwellTime(String[] geofenceIds) {
+        for (String id : geofenceIds) {
+
+            Uri uri = Uri.parse(GeoFenceContentProvider.GEOFENCE_CONTENT_URI + "/" + id);
+            Date now = new Date();
+            ContentValues values = new ContentValues();
+            values.put(DBHelper.GEOFENCES_COLUMN_DWELL_TIME, now.getTime());
+
+            Log.d(TAG, "updated geofence dwell time for geofence " + id);
+
+            App.context.getContentResolver().update(uri, values, null, null);
         }
     }
 
@@ -97,6 +127,7 @@ public class GeoFenceTransitionIntentService extends IntentService {
             App.context.getContentResolver().update(uri, values, null, null);
         }
     }
+
 
     private void sendNotification(String transitionType, String ids) {
 
