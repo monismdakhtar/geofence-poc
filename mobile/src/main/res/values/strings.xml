@@ -14,4 +14,9 @@
     <string name="geofence_server_url">http://199.83.221.130/blood/geofence/update</string>
     <string name="no_locations">No Items Found</string>
     <string name="gcm_sender_id">673992645420</string>
+    <string name="title_activity_map_detail">MapDetailActivity</string>
+    <string name="diff_map_next_button_label">Next Fence</string>
+    <string name="diff_map_prev_button_label">Prev Fence</string>
+    <string name="action_bar_title_fence_map">GeoFence</string>
+
 </resources>

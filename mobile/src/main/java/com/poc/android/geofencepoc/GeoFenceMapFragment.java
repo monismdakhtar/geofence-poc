@@ -47,7 +47,7 @@ public class GeoFenceMapFragment extends Fragment implements
 
     private SupportMapFragment mapFragment;
     private GeoFenceContentMapObserver geoFenceContentObserver;
-    private Marker currentMaker;
+    private Marker currentMarker;
 
     public GeoFenceMapFragment() { }
 
@@ -228,14 +228,14 @@ public class GeoFenceMapFragment extends Fragment implements
     private void addMarker(GeoFence latestGeoFence, GoogleMap map) {
         LatLng latLng = new LatLng(latestGeoFence.getLatitude(), latestGeoFence.getLongitude());
 
-        currentMaker = map.addMarker(new MarkerOptions()
+        currentMarker = map.addMarker(new MarkerOptions()
                 .position(latLng)
                 .draggable(false)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
 
         map.addCircle(new CircleOptions()
-                .center(currentMaker.getPosition())
+                .center(currentMarker.getPosition())
                 .radius(latestGeoFence.getRadius())
                 .strokeColor(R.color.DimGray)
                 .fillColor(R.color.DimGray)
@@ -243,9 +243,9 @@ public class GeoFenceMapFragment extends Fragment implements
     }
 
     private void zoomToCurrentMarker() {
-        if (currentMaker != null) {
+        if (currentMarker != null) {
             if (mapFragment != null && mapFragment.getMap() != null) {
-                mapFragment.getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentMaker.getPosition().latitude, currentMaker.getPosition().longitude), 13));
+                mapFragment.getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentMarker.getPosition().latitude, currentMarker.getPosition().longitude), 13));
 //                mapFragment.getMap().animateCamera(CameraUpdateFactory.zoomTo(15), 1000, null);
             }
         }
@@ -266,9 +266,9 @@ public class GeoFenceMapFragment extends Fragment implements
             return false;
         }
 
-        if (currentMaker != null) {
+        if (currentMarker != null) {
             Projection projection = map.getProjection();
-            Point screenPoint = projection.toScreenLocation((currentMaker.getPosition()));
+            Point screenPoint = projection.toScreenLocation((currentMarker.getPosition()));
             Log.d(TAG, "screenPoint = " + screenPoint + ", view h/w = " + fragView.getMeasuredHeight() + "/" + fragView.getMeasuredWidth());
             if (screenPoint.x < 0 || screenPoint.y < 0) {
                 return false;
@@ -280,7 +280,7 @@ public class GeoFenceMapFragment extends Fragment implements
                 return false;
             }
         } else {
-            Log.d(TAG, "currentMaker == null");
+            Log.d(TAG, "currentMarker == null");
             return false;
         }
 

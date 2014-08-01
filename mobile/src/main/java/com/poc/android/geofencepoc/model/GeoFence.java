@@ -2,6 +2,7 @@ package com.poc.android.geofencepoc.model;
 
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 import com.poc.android.geofencepoc.App;
 
@@ -13,6 +14,8 @@ import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID
 
 @SuppressWarnings("UnusedDeclaration")
 public class GeoFence {
+    private static final String TAG = "GeoFence";
+
     private long id;
     private String name;
     private float latitude;
@@ -110,6 +113,63 @@ public class GeoFence {
         }
 
         return geoFence;
+    }
+
+    public GeoFence getNext() {
+        if (id == -1) {
+            return null;
+        }
+
+        Cursor cursor = App.context.getContentResolver().query(
+                GEOFENCE_CONTENT_URI,
+                GEOFENCES_ALL_COLUMNS,
+                GEOFENCES_COLUMN_ID + " > ? ",
+                new String[]{String.valueOf(id)},
+                GEOFENCES_COLUMN_ID + " asc"
+        );
+
+        GeoFence geofence = null;
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            try {
+                geofence = new GeoFence(cursor);
+            } catch (ModelException e) {
+                Log.e(TAG, "Unable to load next geofence: " + e.getLocalizedMessage());
+                geofence = null;
+            }
+
+            cursor.close();
+        }
+
+        return geofence;
+    }
+
+    public GeoFence getPrev() {
+        if (id == -1) {
+            return null;
+        }
+
+        Cursor cursor = App.context.getContentResolver().query(
+                GEOFENCE_CONTENT_URI,
+                GEOFENCES_ALL_COLUMNS,
+                GEOFENCES_COLUMN_ID + " < ?",
+                new String[]{String.valueOf(id)},
+                GEOFENCES_COLUMN_ID + " desc"
+        );
+
+        GeoFence geofence = null;
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            try {
+                geofence = new GeoFence(cursor);
+            } catch (ModelException e) {
+                Log.e(TAG, "Unable to load prev geofence: " + e.getLocalizedMessage());
+                geofence = null;
+            }
+            cursor.close();
+        }
+
+        return geofence;
     }
 
     @Override

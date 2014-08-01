@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="geofence_server_url">http://199.83.221.130/blood/geofence/update</string>
+</resources>

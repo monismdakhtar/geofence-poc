@@ -1,6 +1,7 @@
 package com.poc.android.geofencepoc;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.text.DateFormat;
 import java.util.Date;
 
+import static com.poc.android.geofencepoc.MapDetailActivity.*;
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_CREATE_TIME;
@@ -53,8 +55,13 @@ public class GeoFenceFragment extends ListFragment implements LoaderManager.Load
 
 
     @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        super.onListItemClick(l, v, position, id);
+    public void onListItemClick(ListView listView, View view, int position, long id) {
+        Log.d(TAG, "onListItemClick(" + position + ")");
+
+        Intent detailIntent = new Intent(getActivity(), MapDetailActivity.class);
+
+        detailIntent.putExtra(MAP_ACTION_EXTRA_GEOFENCE_ID, id);
+        startActivity(detailIntent);
     }
 
     @Override
