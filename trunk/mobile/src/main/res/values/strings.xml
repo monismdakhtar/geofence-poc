@@ -3,7 +3,7 @@
 
     <string name="app_name">GeoFence POC</string>
     <string name="title_section1">GeoFence Map</string>
-    <string name="title_section2">Section 2</string>
+    <string name="title_section2">GeoFence List</string>
     <string name="title_section3">Section 3</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Reset Fence</string>
@@ -12,4 +12,6 @@
     <string name="geofence_transition_notification_text"> Click notification to return to app </string>
     <string name="geofence_transition_notification_title"> %1$s geofence(s) %2$s </string>
     <string name="geofence_server_url">http://199.83.221.130/blood/geofence/update</string>
+    <string name="no_locations">No Items Found</string>
+    <string name="gcm_sender_id">673992645420</string>
 </resources>

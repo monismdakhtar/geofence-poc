@@ -8,11 +8,8 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -79,8 +76,7 @@ public class TabsMainActivity extends ActionBarActivity implements
                         android.R.id.text1,
                         new String[] {
                                 getString(R.string.title_section1),
-                                getString(R.string.title_section2),
-                                getString(R.string.title_section3),
+                                getString(R.string.title_section2)
                         }),
                 this);
 
@@ -94,9 +90,9 @@ public class TabsMainActivity extends ActionBarActivity implements
         Log.d(TAG, "onStart()");
         super.onStart();
 
-        if (! App.getGcmRegistrationId().isEmpty()) {
-            registerGeoFence();
-        }
+//        if (! App.getGcmRegistrationId().isEmpty()) {
+//            registerGeoFence();
+//        }
     }
 
     @Override
@@ -151,17 +147,21 @@ public class TabsMainActivity extends ActionBarActivity implements
 
     @Override
     public boolean onNavigationItemSelected(int position, long id) {
-        Fragment fragment;
+        Fragment destination;
 
-        if (position == 0) {
-            fragment = new GeoFenceMapFragment();
-        } else {
-            fragment = PlaceholderFragment.newInstance(position + 1);
+        switch (position) {
+            case 0:
+                destination = new GeoFenceMapFragment();
+                break;
+            case 1:
+                destination = new GeoFenceFragment();
+                break;
+            default:
+                throw new IllegalArgumentException("onNavigationItemSelected(" + position + "): invalid selection");
         }
 
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragment)
-                .commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, destination).commit();
+
         return true;
     }
 
@@ -281,38 +281,6 @@ public class TabsMainActivity extends ActionBarActivity implements
         }.execute(null, null, null);
 
 
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_tabs_main, container, false);
-        }
     }
 
     // start LifeCycle Logging

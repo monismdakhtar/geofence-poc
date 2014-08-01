@@ -85,7 +85,7 @@ public class GeoFenceContentObserver extends ContentObserver implements
             latestGeoFence = GeoFence.findLatestGeoFence();
         } catch (ModelException e) {
             Log.e(TAG, "unable to update active geofence with latest geofence: " + e.getLocalizedMessage());
-//            googleApiClient.disconnect();
+            googleApiClient.disconnect();
             return;
         }
 
@@ -111,7 +111,7 @@ public class GeoFenceContentObserver extends ContentObserver implements
                 .setLoiteringDelay(30000)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setRequestId(String.valueOf(latestGeoFence.getId()))
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_DWELL)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL)
                 .build();
 
         Log.d(TAG, "created google Geofence: " + googleGeofence);
@@ -132,8 +132,6 @@ public class GeoFenceContentObserver extends ContentObserver implements
                 }
             });
         }
-
-
     }
 
     @Override

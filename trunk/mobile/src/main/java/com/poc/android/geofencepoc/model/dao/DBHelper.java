@@ -23,7 +23,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String TAG = "DBHelper";
 
     private static final String DATABASE_NAME = "geofences";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // geofences table
     public static final String TABLE_GEOFENSES = "geofences";
@@ -46,7 +46,7 @@ public class DBHelper extends SQLiteOpenHelper {
     };
 
     public static final String GEOFENCE_DATABASE_CREATE = "create table " + TABLE_GEOFENSES + " (" + GEOFENCES_COLUMN_ID
-            + " integer primary key autoincrement, " + GEOFENCES_COLUMN_NAME + " text not null, " + GEOFENCES_COLUMN_LATITUDE
+            + " integer primary key, " + GEOFENCES_COLUMN_NAME + " text not null, " + GEOFENCES_COLUMN_LATITUDE
             + " real not null, " + GEOFENCES_COLUMN_LONGITUDE + " real not null, " + GEOFENCES_COLUMN_RADIUS + " real not null, "
             + GEOFENCES_COLUMN_CREATE_TIME + " integer not null, " + GEOFENCES_COLUMN_EXIT_TIME + " integer);";
 

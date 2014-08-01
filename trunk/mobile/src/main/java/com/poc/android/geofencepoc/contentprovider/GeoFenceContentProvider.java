@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.poc.android.geofencepoc.model.dao.DBHelper;
@@ -107,10 +108,33 @@ public class GeoFenceContentProvider extends ContentProvider {
         return cursor;    }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        int uriType = sURIMatcher.match(uri);
+        SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
+        int rowsUpdated;
+
+        switch (uriType) {
+            case GEOFENCES:
+                rowsUpdated = sqlDB.update(TABLE_GEOFENSES, values, selection, selectionArgs);
+                break;
+            case GEOFENCES_ID:
+                String id = uri.getLastPathSegment();
+
+                if (TextUtils.isEmpty(selection)) {
+                    rowsUpdated = sqlDB.update(TABLE_GEOFENSES, values, GEOFENCES_COLUMN_ID + "=" + id, null);
+                } else {
+                    rowsUpdated = sqlDB.update(TABLE_GEOFENSES, values, GEOFENCES_COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                }
+
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+        }
+        // make sure that potential listeners are getting notified
+        //noinspection ConstantConditions
+        getContext().getContentResolver().notifyChange(GEOFENCE_CONTENT_URI, null);
+
+        return rowsUpdated;
     }
 
     private void checkColumnsGeoFence(String[] projection) {

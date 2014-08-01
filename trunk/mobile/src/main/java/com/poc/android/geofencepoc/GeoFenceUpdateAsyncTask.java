@@ -42,6 +42,7 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_CREATE_TIME;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_LATITUDE;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_LONGITUDE;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_NAME;
@@ -158,6 +159,7 @@ public class GeoFenceUpdateAsyncTask extends AsyncTask<GeoFenceUpdateAsyncTask.G
 
     private GeoFence recordGeoFence(GeoFenceUpdateResponse geoFenceUpdateResponse) throws ModelException {
         ContentValues values = new ContentValues();
+        values.put(GEOFENCES_COLUMN_ID, geoFenceUpdateResponse.getId());
         values.put(GEOFENCES_COLUMN_LATITUDE, geoFenceUpdateResponse.getLatitude());
         values.put(GEOFENCES_COLUMN_LONGITUDE, geoFenceUpdateResponse.getLongitude());
         values.put(GEOFENCES_COLUMN_RADIUS, geoFenceUpdateResponse.getRadius());
