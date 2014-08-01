@@ -73,11 +73,11 @@ public class MapDetailActivity extends ActionBarActivity {
                 .strokeWidth(0));
 
         if (zoom) {
-            // Move the camera instantly to point with a zoom of 15.
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 8));
 
             // Zoom in, animating the camera.
-            map.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);
+            map.animateCamera(CameraUpdateFactory.zoomTo(13), 2000, null);
         }
     }
 

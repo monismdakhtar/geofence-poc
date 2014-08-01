@@ -112,7 +112,54 @@
 
     </TableRow>
 
-    <TableRow
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:showDividers="none">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dip"
+                android:text="Entered:"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                tools:ignore="HardcodedText"/>
+
+            <TextView
+                android:id="@+id/entertimeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sun Jun 22 13:32:00 PDT 2014"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:ignore="HardcodedText"/>
+
+        </TableRow>
+
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:showDividers="none">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dip"
+                android:text="Dwelled:"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                tools:ignore="HardcodedText"/>
+
+            <TextView
+                android:id="@+id/dwellTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sun Jun 22 13:32:00 PDT 2014"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:ignore="HardcodedText"/>
+
+        </TableRow>
+
+        <TableRow
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:showDividers="none">

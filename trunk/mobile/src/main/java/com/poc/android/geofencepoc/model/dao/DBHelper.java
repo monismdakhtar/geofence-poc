@@ -23,7 +23,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String TAG = "DBHelper";
 
     private static final String DATABASE_NAME = "geofences";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
 
     // geofences table
     public static final String TABLE_GEOFENSES = "geofences";
@@ -33,6 +33,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String GEOFENCES_COLUMN_LONGITUDE = "longitude";
     public static final String GEOFENCES_COLUMN_RADIUS = "radius";
     public static final String GEOFENCES_COLUMN_CREATE_TIME = "createtime";
+    public static final String GEOFENCES_COLUMN_ENTER_TIME = "entertime";
+    public static final String GEOFENCES_COLUMN_DWELL_TIME = "dwelltime";
     public static final String GEOFENCES_COLUMN_EXIT_TIME = "exittime";
 
     public static final String[] GEOFENCES_ALL_COLUMNS = {
@@ -42,13 +44,17 @@ public class DBHelper extends SQLiteOpenHelper {
             GEOFENCES_COLUMN_LONGITUDE,
             GEOFENCES_COLUMN_RADIUS,
             GEOFENCES_COLUMN_CREATE_TIME,
+            GEOFENCES_COLUMN_ENTER_TIME,
+            GEOFENCES_COLUMN_DWELL_TIME,
             GEOFENCES_COLUMN_EXIT_TIME
     };
+
 
     public static final String GEOFENCE_DATABASE_CREATE = "create table " + TABLE_GEOFENSES + " (" + GEOFENCES_COLUMN_ID
             + " integer primary key, " + GEOFENCES_COLUMN_NAME + " text not null, " + GEOFENCES_COLUMN_LATITUDE
             + " real not null, " + GEOFENCES_COLUMN_LONGITUDE + " real not null, " + GEOFENCES_COLUMN_RADIUS + " real not null, "
-            + GEOFENCES_COLUMN_CREATE_TIME + " integer not null, " + GEOFENCES_COLUMN_EXIT_TIME + " integer);";
+            + GEOFENCES_COLUMN_CREATE_TIME + " integer not null, " + GEOFENCES_COLUMN_ENTER_TIME + " integer, "
+            + GEOFENCES_COLUMN_DWELL_TIME + " integer, " + GEOFENCES_COLUMN_EXIT_TIME + " integer);";
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
