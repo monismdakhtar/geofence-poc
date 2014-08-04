@@ -68,6 +68,24 @@
             android:name=".MapDetailActivity"
             android:label="@string/title_activity_map_detail" >
         </activity>
+
+        <service
+            android:name=".EscapeeDetectionService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
+
+        <receiver
+            android:name=".EscapeeDetectionReceiver"
+            android:enabled="true"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.poc.android.geofencepoc.EscapeeDetectionReceiver.start" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
