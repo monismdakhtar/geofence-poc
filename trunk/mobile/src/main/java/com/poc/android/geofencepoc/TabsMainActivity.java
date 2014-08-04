@@ -261,7 +261,7 @@ public class TabsMainActivity extends ActionBarActivity implements
                     // so it can use GCM/HTTP or CCS to send messages to your app.
                     // The request to your server should be authenticated if your app
                     // is using accounts.
-//                    sendRegistrationIdToBackend();
+                    //sendRegistrationIdToBackend();
 
                     // For this demo: we don't need to send it because the device
                     // will send upstream messages to a server that echo back the

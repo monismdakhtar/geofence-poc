@@ -11,6 +11,7 @@ import android.util.Log;
 import com.poc.android.geofencepoc.model.GeoFence;
 import com.poc.android.geofencepoc.model.ModelException;
 
+import java.util.Date;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +19,11 @@ public class EscapeeDetectionService extends Service {
     private static final String TAG = "EscapeeDetectionService";
 
     private static final long TIMER_INTERVAL = 60000L;
+    private static final long SECOND = 1000L;
+    private static final long MINUTE = SECOND * 60;
+    private static final long HOUR = MINUTE * 60;
+    @SuppressWarnings("UnusedDeclaration")
+    private static final long DAY = HOUR * 24;
 
     private ScheduledThreadPoolExecutor threadPool = new ScheduledThreadPoolExecutor(1, new ServiceThreadFactory());
     private boolean isRunning = false;
@@ -71,6 +77,13 @@ public class EscapeeDetectionService extends Service {
         Log.d(TAG, "current geofence : " + currentGeoFence);
 
         if (currentGeoFence.getEnterTime() == null) {
+            if (currentGeoFence.getCreateTime() != null) {
+                Date now = new Date();
+                long diff = now.getTime() - currentGeoFence.getCreateTime().getTime();
+            } else {
+                Log.e(TAG, "current geofence create time == null");
+                return;
+            }
 
         }
     }
