@@ -1,5 +1,6 @@
 package com.poc.android.geofencepoc;
 
+import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Date;
 
+import static com.poc.android.geofencepoc.EscapeeDetectionReceiver.*;
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 
 
@@ -83,6 +85,9 @@ public class TabsMainActivity extends ActionBarActivity implements
 
         geoFenceContentObserver = new GeoFenceContentObserver(new Handler());
         getContentResolver().registerContentObserver(GEOFENCE_CONTENT_URI, true, geoFenceContentObserver);
+
+        // start escapee detection
+        sendBroadcast(new Intent(ESCAPEERECEIVER_START_ACTION));
     }
 
     @Override

@@ -22,6 +22,8 @@ public class GeoFence {
     private float longitude;
     private float radius;
     private Date createTime;
+    private Date enterTime;
+    private Date dwellTime;
     private Date exitTime;
 
     public GeoFence() {}
@@ -85,6 +87,22 @@ public class GeoFence {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public Date getEnterTime() {
+        return enterTime;
+    }
+
+    public void setEnterTime(Date enterTime) {
+        this.enterTime = enterTime;
+    }
+
+    public Date getDwellTime() {
+        return dwellTime;
+    }
+
+    public void setDwellTime(Date dwellTime) {
+        this.dwellTime = dwellTime;
     }
 
     public Date getExitTime() {
@@ -181,6 +199,8 @@ public class GeoFence {
                 ", longitude=" + longitude +
                 ", radius=" + radius +
                 ", createTime=" + createTime +
+                ", enterTime=" + enterTime +
+                ", dwellTime=" + dwellTime +
                 ", exitTime=" + exitTime +
                 '}';
     }
@@ -205,7 +225,9 @@ public class GeoFence {
             setLongitude(cursor.getFloat(3));
             setRadius(cursor.getFloat(4));
             setCreateTime(new Date(cursor.getLong(5)));
-            setExitTime(new Date(cursor.getLong(6)));
+            setEnterTime(new Date(cursor.getLong(6)));
+            setDwellTime(new Date(cursor.getLong(7)));
+            setExitTime(new Date(cursor.getLong(8)));
             if (closeCursor) cursor.close();
         } else {
             throw new ModelException("unable to load: cursor null or count is 0");
