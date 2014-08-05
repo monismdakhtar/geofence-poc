@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -15,9 +14,23 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider;
 import com.poc.android.geofencepoc.model.dao.DBHelper;
+import com.poc.android.geofencepoc.model.json.GeoFenceResponse;
+import com.poc.android.geofencepoc.model.json.UpdateDateTimeRequest;
+import com.poc.android.geofencepoc.util.JsonPoster;
 
+import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -44,7 +57,6 @@ public class GeoFenceTransitionIntentService extends IntentService {
             Log.e(TAG, "Location Services error: " + Integer.toString(errorCode));
         } else {
             int transitionType = geofencingEvent.getGeofenceTransition();
-            Location location = geofencingEvent.getTriggeringLocation();
 
             List<Geofence> geofences = geofencingEvent.getTriggeringGeofences();
 
@@ -66,7 +78,7 @@ public class GeoFenceTransitionIntentService extends IntentService {
                 case Geofence.GEOFENCE_TRANSITION_EXIT:
                     transitionString = "exited";
                     updateExitTime(geofenceIds);
-                    resetNewGeoFence(location);
+                    resetNewGeoFence();
                     break;
                 case Geofence.GEOFENCE_TRANSITION_ENTER:
                     transitionString = "entered";
@@ -97,6 +109,8 @@ public class GeoFenceTransitionIntentService extends IntentService {
             Log.d(TAG, "updated geofence enter time for geofence " + id);
 
             App.context.getContentResolver().update(uri, values, null, null);
+
+            postDateTimeUpdate(Long.valueOf(id), now, UpdateType.ENTER);
         }
     }
 
@@ -111,6 +125,8 @@ public class GeoFenceTransitionIntentService extends IntentService {
             Log.d(TAG, "updated geofence dwell time for geofence " + id);
 
             App.context.getContentResolver().update(uri, values, null, null);
+
+            postDateTimeUpdate(Long.valueOf(id), now, UpdateType.DWELL);
         }
     }
 
@@ -125,9 +141,93 @@ public class GeoFenceTransitionIntentService extends IntentService {
             Log.d(TAG, "updated geofence exit time for geofence " + id);
 
             App.context.getContentResolver().update(uri, values, null, null);
+
+            postDateTimeUpdate(Long.valueOf(id), now, UpdateType.EXIT);
         }
     }
 
+    private void postDateTimeUpdate(long id, Date dateTime, UpdateType updateType) {
+        String serverUrl;
+
+        switch (updateType) {
+            case ENTER:
+                serverUrl = App.context.getString(R.string.geofence_server_url) + "updateEnterTime";
+                break;
+            case DWELL:
+                serverUrl = App.context.getString(R.string.geofence_server_url) + "updateDwellTime";
+                break;
+            case EXIT:
+                serverUrl = App.context.getString(R.string.geofence_server_url) + "updateExitTime";
+                break;
+            default:
+                Log.e(TAG, "unable to determine server url, not posting datetime update: " + updateType);
+                return;
+        }
+
+        UpdateDateTimeRequest updateDateTimeRequest = new UpdateDateTimeRequest();
+        updateDateTimeRequest.setId(id);
+        updateDateTimeRequest.setDateTime(dateTime);
+
+        GsonBuilder builder = new GsonBuilder();
+        builder.excludeFieldsWithoutExposeAnnotation();
+        builder.setDateFormat(DateFormat.LONG);
+        builder.registerTypeAdapter(Date.class, new JsonDeserializer<Date>() {
+            public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                return new Date(json.getAsJsonPrimitive().getAsLong());
+            }
+        });
+
+        builder.registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
+            @Override
+            public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+                return src == null ? null : new JsonPrimitive(src.getTime());
+            }
+        });
+
+        Gson gson = builder.create();
+
+        String requestJson = gson.toJson(updateDateTimeRequest);
+
+        Log.d(TAG, "requestJson: " + requestJson);
+
+        JsonPoster jsonPoster = new JsonPoster();
+        String responseJson;
+        try {
+            responseJson = jsonPoster.postJson(requestJson, serverUrl);
+        } catch (JsonPoster.JsonPosterException e) {
+            Log.e(TAG, "Error posting geofence time update json: " + e.getLocalizedMessage());
+            return;
+        }
+
+        Log.d(TAG, "JSON returned: " + responseJson);
+        GeoFenceResponse response = gson.fromJson(responseJson, GeoFenceResponse.class);
+        Log.d(TAG, "response:" + response);
+
+        Date dateReturned = null;
+        switch (updateType) {
+            case ENTER:
+                dateReturned = response.getEnterTime();
+                break;
+            case DWELL:
+                dateReturned = response.getDwellTime();
+                break;
+            case EXIT:
+                dateReturned = response.getExitTime();
+                break;
+        }
+
+        if (dateReturned != null) {
+            if (dateTime.getTime() != dateReturned.getTime()) {
+                Log.e(TAG, "date returned from geofence update call does not match the input");
+            }
+        } else {
+            Log.e(TAG, "date returned from geofence update call is null");
+        }
+    }
+
+    private enum UpdateType {
+        ENTER, DWELL, EXIT
+    }
 
     private void sendNotification(String transitionType, String ids) {
 
@@ -165,13 +265,7 @@ public class GeoFenceTransitionIntentService extends IntentService {
         mNotificationManager.notify(0, builder.build());
     }
 
-    public void resetNewGeoFence(Location location) {
-        GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest geoFenceUpdateRequest = new GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest();
-        geoFenceUpdateRequest.setDeviceId(App.getGcmRegistrationId());
-        geoFenceUpdateRequest.setLatitude(location.getLatitude());
-        geoFenceUpdateRequest.setLongitude(location.getLongitude());
-        geoFenceUpdateRequest.setTimestamp(new Date());
-
-        new GeoFenceUpdateAsyncTask(this).execute(geoFenceUpdateRequest);
+    public void resetNewGeoFence() {
+        new GeoFenceCreateAsyncTask(this).execute(App.getGcmRegistrationId());
     }
 }

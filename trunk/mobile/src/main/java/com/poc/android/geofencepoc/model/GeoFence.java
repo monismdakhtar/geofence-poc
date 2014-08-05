@@ -10,6 +10,7 @@ import java.util.Date;
 
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_CREATE_TIME;
 import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -121,7 +122,7 @@ public class GeoFence {
                 GEOFENCES_ALL_COLUMNS,
                 null,
                 null,
-                GEOFENCES_COLUMN_ID + " desc"
+                GEOFENCES_COLUMN_CREATE_TIME + " desc"
         );
 
         if (cursor != null) {

@@ -5,6 +5,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.poc.android.geofencepoc.App;
+import com.poc.android.geofencepoc.GeoFenceCreateAsyncTask;
+
+import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
+
 /**
  * {@link android.database.sqlite.SQLiteOpenHelper} for our {@link com.poc.android.geofencepoc.model.GeoFence} table
   *  <p>
@@ -71,5 +76,13 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion + ", which will destroy all old data");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_GEOFENSES);
         onCreate(db);
+    }
+
+    public void clearGeoFenceData(SQLiteDatabase db) {
+        Log.d(TAG, "recreating geofence DB...");
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_GEOFENSES);
+        db.execSQL(GEOFENCE_DATABASE_CREATE);
+        new GeoFenceCreateAsyncTask(App.context).execute(App.getGcmRegistrationId());
+        App.context.getContentResolver().notifyChange(GEOFENCE_CONTENT_URI, null);
     }
 }

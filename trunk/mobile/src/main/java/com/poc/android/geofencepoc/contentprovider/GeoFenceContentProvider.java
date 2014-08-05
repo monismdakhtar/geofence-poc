@@ -13,11 +13,11 @@ import android.util.Log;
 import com.poc.android.geofencepoc.model.dao.DBHelper;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 
-import static com.poc.android.geofencepoc.model.dao.DBHelper.*;
-import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_CREATE_TIME;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_ALL_COLUMNS;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.GEOFENCES_COLUMN_ID;
+import static com.poc.android.geofencepoc.model.dao.DBHelper.TABLE_GEOFENSES;
 
 public class GeoFenceContentProvider extends ContentProvider {
     private static final String TAG = "GeoFenceContentProvider";
@@ -69,7 +69,6 @@ public class GeoFenceContentProvider extends ContentProvider {
 
         switch (uriType) {
             case GEOFENCES:
-                values.put(GEOFENCES_COLUMN_CREATE_TIME, new Date().getTime());
                 id = sqlDB.insert(TABLE_GEOFENSES, null, values);
                 getContext().getContentResolver().notifyChange(GEOFENCE_CONTENT_URI, null);
                 result = Uri.parse("content://" + AUTHORITY + "/" + GEOFENCE_PATH + "/" + id);
