@@ -2,8 +2,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".TabsMainActivity"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    <item android:id="@+id/action_reset_geofence"
+        android:title="@string/menu_reset_geofence"
         android:orderInCategory="100"
         app:showAsAction="never" />
+    <item android:id="@+id/action_reset_geofence_db"
+          android:title="@string/menu_reset_geofence_db"
+          android:orderInCategory="100"
+          app:showAsAction="never" />
 </menu>

@@ -76,15 +76,20 @@ public class EscapeeDetectionService extends Service {
 
         Log.d(TAG, "current geofence : " + currentGeoFence);
 
-        if (currentGeoFence.getEnterTime() == null) {
+        if (currentGeoFence.getEnterTime() == null || currentGeoFence.getEnterTime().getTime() == 0) {
+            Log.d(TAG, "have not entered current geofence");
             if (currentGeoFence.getCreateTime() != null) {
                 Date now = new Date();
                 long diff = now.getTime() - currentGeoFence.getCreateTime().getTime();
-            } else {
-                Log.e(TAG, "current geofence create time == null");
-                return;
-            }
 
+                if (diff > (MINUTE * 5)) {
+                    Log.d(TAG, "have not entered current geofence in over 10 minutes, fetching new geofence");
+                    new GeoFenceCreateAsyncTask(this).execute(App.getGcmRegistrationId());
+                }
+            } else {
+                Log.e(TAG, "current geofence create time == null, fetching new geofence");
+                new GeoFenceCreateAsyncTask(this).execute(App.getGcmRegistrationId());
+            }
         }
     }
 
@@ -131,6 +136,5 @@ public class EscapeeDetectionService extends Service {
         Log.d(TAG, "onTaskRemoved(" + rootIntent + ")");
         super.onTaskRemoved(rootIntent);
     }
-
 }
 

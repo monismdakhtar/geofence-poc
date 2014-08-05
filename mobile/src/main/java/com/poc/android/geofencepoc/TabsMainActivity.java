@@ -1,7 +1,7 @@
 package com.poc.android.geofencepoc;
 
 import android.content.Intent;
-import android.location.Location;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,23 +15,18 @@ import android.widget.ArrayAdapter;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.location.LocationServices;
+import com.poc.android.geofencepoc.model.dao.DBHelper;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Date;
 
-import static com.poc.android.geofencepoc.EscapeeDetectionReceiver.*;
+import static com.poc.android.geofencepoc.EscapeeDetectionReceiver.ESCAPEERECEIVER_START_ACTION;
 import static com.poc.android.geofencepoc.contentprovider.GeoFenceContentProvider.GEOFENCE_CONTENT_URI;
 
 
-public class TabsMainActivity extends ActionBarActivity implements
-        ActionBar.OnNavigationListener,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+public class TabsMainActivity extends ActionBarActivity implements ActionBar.OnNavigationListener {
 
     private static final String TAG = "TabsMainActivity";
 
@@ -46,8 +41,6 @@ public class TabsMainActivity extends ActionBarActivity implements
     private GoogleCloudMessaging gcm;
     private String gcmRegistrationId;
     private GeoFenceContentObserver geoFenceContentObserver;
-
-    private GoogleApiClient googleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,10 +87,6 @@ public class TabsMainActivity extends ActionBarActivity implements
     protected void onStart() {
         Log.d(TAG, "onStart()");
         super.onStart();
-
-//        if (! App.getGcmRegistrationId().isEmpty()) {
-//            registerGeoFence();
-//        }
     }
 
     @Override
@@ -143,10 +132,18 @@ public class TabsMainActivity extends ActionBarActivity implements
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            registerGeoFence();
-            return true;
+
+        switch (id) {
+            case R.id.action_reset_geofence:
+                registerGeoFence();
+                break;
+            case R.id.action_reset_geofence_db:
+                DBHelper dbHelper = new DBHelper(this);
+                SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
+                dbHelper.clearGeoFenceData(sqlDB);
+                break;
         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -170,43 +167,6 @@ public class TabsMainActivity extends ActionBarActivity implements
         return true;
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(TAG, "Google API Client onConnected()");
-
-        String gcmRegistrationId = App.getGcmRegistrationId();
-
-        if (gcmRegistrationId.isEmpty()) {
-            Log.d(TAG, "unable to register GeoFence without GCM registration ID");
-        } else {
-
-            Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-            Log.d(TAG, "current location: " + location);
-
-            if (location != null) {
-                GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest geoFenceUpdateRequest = new GeoFenceUpdateAsyncTask.GeoFenceUpdateRequest();
-                geoFenceUpdateRequest.setDeviceId(gcmRegistrationId);
-                geoFenceUpdateRequest.setLatitude(location.getLatitude());
-                geoFenceUpdateRequest.setLongitude(location.getLongitude());
-                geoFenceUpdateRequest.setTimestamp(new Date());
-
-                new GeoFenceUpdateAsyncTask(this).execute(geoFenceUpdateRequest);
-            }
-        }
-        googleApiClient.disconnect();
-    }
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-        Log.d(TAG, "Google API Client onConnectionSuspended(" + cause + ")");
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d(TAG, "Google API Client onConnectionFailed(" + connectionResult + ")");
-    }
-
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
         if (resultCode != ConnectionResult.SUCCESS) {
@@ -224,19 +184,7 @@ public class TabsMainActivity extends ActionBarActivity implements
 
     private void registerGeoFence() {
         Log.d(TAG, "registerGeoFence()");
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient.Builder(this)
-                    .addApi(LocationServices.API)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
-        }
-
-        if (!googleApiClient.isConnected() && !googleApiClient.isConnecting()) {
-            googleApiClient.connect();
-        } else if (googleApiClient.isConnected()) {
-            onConnected(null);
-        }
+        new GeoFenceCreateAsyncTask(this).execute(gcmRegistrationId);
     }
 
     /**
